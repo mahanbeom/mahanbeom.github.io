@@ -15,11 +15,13 @@ Astro + React + Tailwind CSS v4 + shadcn/ui로 만든 개인 블로그.
 ## 시작하기
 
 ```bash
-npm install
-npm run dev      # 개발 서버 (http://localhost:4321)
-npm run build    # 프로덕션 빌드 (dist/)
-npm run preview  # 빌드 결과 미리보기
+pnpm install
+pnpm dev       # 개발 서버 (http://localhost:4321)
+pnpm build     # 프로덕션 빌드 (dist/)
+pnpm preview   # 빌드 결과 미리보기
 ```
+
+pnpm이 없다면: `npm i -g pnpm` 또는 `corepack enable`
 
 ## 글 쓰기
 
@@ -53,7 +55,7 @@ draft: false
 - 사이트 제목·프로필·연락처: `src/consts.ts`
 - 소개 페이지: `src/pages/about.astro`
 - 색상 테마: `src/styles/global.css` (shadcn CSS 변수)
-- shadcn 컴포넌트 추가: `npx shadcn@latest add <component>`
+- shadcn 컴포넌트 추가: `pnpm dlx shadcn@latest add <component>`
 
 ## 구조
 
