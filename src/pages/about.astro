@@ -1,0 +1,68 @@
+---
+import { Github, Mail } from "lucide-react";
+
+import { AUTHOR } from "@/consts";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+
+const skills = ["TypeScript", "React", "Astro", "Tailwind CSS", "Node.js"];
+---
+
+<BaseLayout title="소개">
+  <h1 class="mb-6 text-xl font-semibold">소개</h1>
+
+  <Card>
+    <CardHeader>
+      <div class="flex items-center gap-4">
+        <div
+          class="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground"
+        >
+          HB
+        </div>
+        <div>
+          <CardTitle className="text-xl">{AUTHOR.name}</CardTitle>
+          <p class="mt-1 text-sm text-muted-foreground">{AUTHOR.bio}</p>
+        </div>
+      </div>
+    </CardHeader>
+    <CardContent>
+      <Separator className="mb-6" />
+
+      <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+        기술 스택
+      </h2>
+      <div class="mb-6 flex flex-wrap gap-1.5">
+        {skills.map((skill) => <Badge variant="secondary">{skill}</Badge>)}
+      </div>
+
+      <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+        연락처
+      </h2>
+      <div class="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <a href={AUTHOR.github} target="_blank" rel="noopener noreferrer">
+            <Github />
+            GitHub
+          </a>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <a href={`mailto:${AUTHOR.email}`}>
+            <Mail />
+            이메일
+          </a>
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+
+  <div class="prose prose-neutral mt-8 max-w-none dark:prose-invert">
+    <p>
+      안녕하세요, {AUTHOR.name}입니다. 이 블로그는 개발하며 배운 것들을 기록하고 공유하는
+      공간입니다. 이 소개 페이지의 내용은 <code>src/pages/about.astro</code>에서 자유롭게 수정할
+      수 있습니다.
+    </p>
+  </div>
+</BaseLayout>

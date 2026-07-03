@@ -1,0 +1,145 @@
+---
+import { getCollection } from "astro:content";
+import { Github, Mail, Rss } from "lucide-react";
+
+import { AUTHOR, SITE_TITLE } from "@/consts";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import ThemeToggle from "@/components/ThemeToggle";
+
+const posts = await getCollection("blog", ({ data }) => !data.draft);
+
+const categoryCounts = posts.reduce<Record<string, number>>((acc, post) => {
+  acc[post.data.category] = (acc[post.data.category] ?? 0) + 1;
+  return acc;
+}, {});
+const categories = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]);
+
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
+
+const currentPath = Astro.url.pathname;
+---
+
+<aside class="md:sticky md:top-8 md:self-start">
+  <div class="flex items-center justify-between md:block">
+    <a href="/" class="flex items-center gap-3 md:mb-3">
+      <div
+        class="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground"
+      >
+        HB
+      </div>
+      <div>
+        <p class="font-semibold leading-tight">{SITE_TITLE}</p>
+        <p class="text-xs text-muted-foreground">{AUTHOR.name}</p>
+      </div>
+    </a>
+    <div class="md:hidden">
+      <ThemeToggle client:load />
+    </div>
+  </div>
+
+  <p class="mt-3 hidden text-sm leading-relaxed text-muted-foreground md:block">
+    {AUTHOR.bio}
+  </p>
+
+  <nav class="mt-4 hidden md:block" aria-label="주 메뉴">
+    <ul class="space-y-1 text-sm">
+      <li>
+        <a
+          href="/"
+          class:list={[
+            "block rounded-md px-2 py-1.5 transition-colors hover:bg-accent",
+            currentPath === "/" ? "bg-accent font-medium" : "text-muted-foreground",
+          ]}
+        >
+          홈
+        </a>
+      </li>
+      <li>
+        <a
+          href="/about/"
+          class:list={[
+            "block rounded-md px-2 py-1.5 transition-colors hover:bg-accent",
+            currentPath.startsWith("/about") ? "bg-accent font-medium" : "text-muted-foreground",
+          ]}
+        >
+          소개
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="hidden md:block">
+    <Separator className="my-4" />
+
+    <p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      카테고리
+    </p>
+    <ul class="space-y-1 text-sm">
+      {
+        categories.map(([category, count]) => (
+          <li>
+            <a
+              href={`/categories/${category}/`}
+              class:list={[
+                "flex items-center justify-between rounded-md px-2 py-1.5 transition-colors hover:bg-accent",
+                currentPath === `/categories/${category}/`
+                  ? "bg-accent font-medium"
+                  : "text-muted-foreground",
+              ]}
+            >
+              <span>{category}</span>
+              <span class="text-xs">{count}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <Separator className="my-4" />
+
+    <p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">태그</p>
+    <div class="flex flex-wrap gap-1.5">
+      {
+        tags.map((tag) => (
+          <a href={`/tags/${tag}/`}>
+            <Badge variant="secondary" className="hover:bg-accent">
+              #{tag}
+            </Badge>
+          </a>
+        ))
+      }
+    </div>
+
+    <Separator className="my-4" />
+
+    <div class="flex items-center gap-1">
+      <a
+        href={AUTHOR.github}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub"
+        class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      >
+        <Github className="size-4" />
+      </a>
+      <a
+        href={`mailto:${AUTHOR.email}`}
+        aria-label="이메일"
+        class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      >
+        <Mail className="size-4" />
+      </a>
+      <a
+        href="/rss.xml"
+        aria-label="RSS"
+        class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      >
+        <Rss className="size-4" />
+      </a>
+      <div class="ml-auto">
+        <ThemeToggle client:load />
+      </div>
+    </div>
+  </div>
+</aside>

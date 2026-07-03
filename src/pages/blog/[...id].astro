@@ -1,0 +1,59 @@
+---
+import { getCollection, render } from "astro:content";
+
+import { formatDate } from "@/lib/utils";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog", ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { id: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<BaseLayout title={post.data.title} description={post.data.description}>
+  <article>
+    <header class="mb-8">
+      <div class="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+        <a href={`/categories/${post.data.category}/`}>
+          <Badge variant="outline">{post.data.category}</Badge>
+        </a>
+        <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+        {
+          post.data.updatedDate && (
+            <span class="text-xs">(수정: {formatDate(post.data.updatedDate)})</span>
+          )
+        }
+      </div>
+      <h1 class="text-2xl font-bold leading-tight md:text-3xl">{post.data.title}</h1>
+      <p class="mt-3 text-muted-foreground">{post.data.description}</p>
+      {
+        post.data.tags.length > 0 && (
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            {post.data.tags.map((tag) => (
+              <a href={`/tags/${tag}/`}>
+                <Badge variant="secondary" className="hover:bg-accent">
+                  #{tag}
+                </Badge>
+              </a>
+            ))}
+          </div>
+        )
+      }
+      <Separator className="mt-6" />
+    </header>
+
+    <div
+      class="prose prose-neutral max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-a:underline-offset-4 prose-pre:rounded-lg"
+    >
+      <Content />
+    </div>
+  </article>
+</BaseLayout>
