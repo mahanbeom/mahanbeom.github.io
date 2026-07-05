@@ -1,8 +1,6 @@
 ---
 title: "렌더링 전략 CSR·SSR·ISR 완전 정리"
-description: "HTML을 언제·어디서 만드는가를 축으로 CSR·SSR·ISR을 구분하고, ISR의 stale-while-revalidate 동작과 실시간 대시보드에 부적합한 이유를 백엔드·인프라 관점까지 묶어 정리한다."
-pubDate: 2026-07-05
-category: "Frontend"
+date: 2026-07-05
 tags: ["nextjs", "rendering", "ssr", "isr", "csr"]
 ---
 
