@@ -1,0 +1,66 @@
+---
+import { getCollection } from "astro:content";
+
+import { formatDate } from "@/lib/utils";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { Badge } from "@/components/ui/badge";
+
+const entries = (await getCollection("daily", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const groups = entries.reduce<Record<string, typeof entries>>((acc, entry) => {
+  const key = entry.data.date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+  });
+  (acc[key] ??= []).push(entry);
+  return acc;
+}, {});
+---
+
+<BaseLayout title="Daily" description="그날그날 공부한 내용을 기록합니다.">
+  <h1 class="mb-2 text-xl font-semibold">Daily</h1>
+  <p class="mb-8 text-sm text-muted-foreground">그날그날 공부한 내용을 기록합니다.</p>
+
+  {
+    entries.length === 0 ? (
+      <p class="text-sm text-muted-foreground">아직 기록이 없습니다.</p>
+    ) : (
+      Object.entries(groups).map(([month, items]) => (
+        <section class="mb-8">
+          <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            {month}
+          </h2>
+          <ul class="flex flex-col gap-2">
+            {items.map((entry) => (
+              <li>
+                <a
+                  href={`/daily/${entry.id}/`}
+                  class="group flex flex-col gap-1 rounded-lg border bg-card px-4 py-3 transition-colors hover:bg-accent sm:flex-row sm:items-center sm:gap-3"
+                >
+                  <time
+                    datetime={entry.data.date.toISOString()}
+                    class="shrink-0 text-sm tabular-nums text-muted-foreground"
+                  >
+                    {formatDate(entry.data.date)}
+                  </time>
+                  <span class="font-medium group-hover:underline group-hover:underline-offset-4">
+                    {entry.data.title}
+                  </span>
+                  {entry.data.tags.length > 0 && (
+                    <span class="flex flex-wrap gap-1.5 sm:ml-auto">
+                      {entry.data.tags.map((tag) => (
+                        <Badge variant="secondary">#{tag}</Badge>
+                      ))}
+                    </span>
+                  )}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    )
+  }
+</BaseLayout>

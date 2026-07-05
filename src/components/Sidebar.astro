@@ -57,6 +57,17 @@ const currentPath = Astro.url.pathname;
       </li>
       <li>
         <a
+          href="/daily/"
+          class:list={[
+            "block rounded-md px-2 py-1.5 transition-colors hover:bg-accent",
+            currentPath.startsWith("/daily") ? "bg-accent font-medium" : "text-muted-foreground",
+          ]}
+        >
+          Daily
+        </a>
+      </li>
+      <li>
+        <a
           href="/about/"
           class:list={[
             "block rounded-md px-2 py-1.5 transition-colors hover:bg-accent",
