@@ -48,6 +48,38 @@ Vite + React SPA의 강점은 단순한 멘탈 모델(모든 코드가 브라우
 
 추가 원칙: 되돌리기 어려운 결정(프레임워크)일수록 보수적으로, 쉬운 결정(상태 라이브러리)은 과감하게. 세부 스택은 커뮤니티 표준(TanStack Query, Zustand, Tailwind)을 따라 고민 비용을 0으로.
 
+## Node 서버가 필요한 진짜 이유 — 시점 구분
+
+"node_modules를 쓰려면 Node 서버가 필수 아닌가?"라는 의문이 있었는데, **Node가 필요한 시점**을 나누면 풀린다.
+
+- **개발 시점**: Vite 개발 서버 = Node 프로그램. 개발자 PC에서만 실행
+- **빌드 시점**: `npm run build`도 Node로 실행. node_modules의 코드는 이때 번들 JS 안으로 **복사되어 녹아든다** — 운영 환경에 node_modules는 존재할 필요 없음
+- **운영 시점**: 여기서 갈린다. CSR은 번들 JS를 실행하는 주체가 **사용자 브라우저**이므로 서버는 파일 전송만 하면 됨(Node 불필요). SSR은 매 요청마다 서버에서 `renderToString()` 등 JS를 실행해야 하므로 **JS 런타임이 서버에 상주**해야 함(Node 필요)
+
+즉 Node가 필요한 기준은 node_modules가 아니라 "운영 중 서버에서 JS를 실행할 일이 있느냐"다.
+
+## 인프라 실체 — systemd vs Nginx 파일 서빙
+
+**Next.js 셀프 호스팅**: `next build` → `next start`로 Node 프로세스가 3000 포트에 상주. 크래시 대비를 위해 systemd(`Restart=always`)나 PM2, Docker에 등록하고, 앞에 Nginx 리버스 프록시(TLS, gzip)를 둔다. 운영 부담 = 프로세스 감시·재시작, 메모리 누수, 무중단 배포, 스케일링. Vercel은 이걸 대신해주는 서비스다.
+
+**Vite CSR**: `dist/`를 Nginx 문서 루트에 놓기만 하면 끝. Nginx도 프로세스지만 **내 애플리케이션 코드를 실행하는 프로세스가 아니라 범용 파일 서버** — 내 코드 버그로 죽을 일도, 메모리 누수도 없고, 배포는 파일 교체로 끝난다. S3/GitHub Pages면 VM 자체가 불필요. 유일한 설정은 SPA 라우팅용 `try_files $uri /index.html` fallback.
+
+## 첫 렌더링 이후의 페칭 경로 — 렌더링 방식과 무관, 아키텍처가 결정
+
+hydration이 끝나면 앱은 브라우저 안의 JS다. 이후 컴포넌트별 페칭은 `브라우저 → 백엔드 API` 직거래이고, 프론트를 서빙한 인프라(Node 프로세스든 Nginx든)는 이 경로에 등장하지 않는다. 그래서 SSR/CSR 무관하게 동일하게 동작한다.
+
+**단 하나의 예외가 BFF 경유**: `브라우저 → Next.js 서버(Route Handler) → 백엔드`로 구성하면 Node 프로세스가 런타임 내내 모든 페칭 경로에 상주한다. 즉 "이후 페칭이 프론트 서버와 무관한가"는 렌더링 방식이 아니라 **직행 vs BFF 경유라는 아키텍처 선택**이 결정한다. CSR + Nginx는 경유할 프로세스가 없으니 항상 직행.
+
+## BFF(Backend for Frontend) 패턴
+
+BFF는 Next.js 전용이 아니라 **일반 아키텍처 패턴**(2015년경 SoundCloud/Sam Newman)이다. 범용 백엔드 API와 각 클라이언트(웹/iOS/Android)의 요구 사이 간극을 메우기 위해, 클라이언트마다 전용 중간 서버를 두는 것.
+
+하는 일: API 조합(서버 간 저지연 병렬 호출로 여러 API를 한 응답으로), 응답 가공(도메인 모델 → 화면 모델), 토큰 은닉(httpOnly 쿠키로 XSS 노출 차단 — 최근 채택의 최대 동기), 캐싱, 프로토콜 변환.
+
+구현 도구: Express/NestJS 독립 서버, Spring Cloud Gateway, GraphQL 서버, 그리고 Next.js. Next.js가 자주 언급되는 이유는 Route Handlers/Server Actions로 **별도 서버 없이 프론트 프로젝트에 BFF를 내장**할 수 있어서일 뿐, 패턴상 Express BFF와 동일하다.
+
+원칙: **비즈니스 로직·권한 검증은 백엔드, BFF는 조합·가공·전달만**. 클라이언트가 웹 하나뿐이고 API가 화면에 잘 맞으면 BFF는 불필요한 홉이다.
+
 ## Q&A 하이라이트
 
 - **Q. SSR 하려면 프레임워크가 필수인가?** A. 아니다. `renderToString()` + `hydrateRoot()`는 React API고 Vite도 SSR을 공식 지원한다. 하지만 라우팅 매칭, 데이터 직렬화/복원, hydration 정합성, 코드 스플리팅 연동을 전부 손으로 해야 해서 사실상 프레임워크를 만드는 일이 된다. 프레임워크의 상품은 SSR "가능"이 아니라 이 배관의 패키징이다.
@@ -59,4 +91,6 @@ Vite + React SPA의 강점은 단순한 멘탈 모델(모든 코드가 브라우
 - Next.js 다층 캐싱 구조(fetch cache, Full Route Cache, Router Cache)의 정확한 동작
 - RSC의 직렬화 방식과 `'use client'` 경계 규칙
 - React Router v7 framework 모드 — Vite 생태계의 SSR 대안 직접 체험
-- BFF 패턴에서 인증 토큰 관리(httpOnly 쿠키 vs 메모리) 실습
+- BFF에서 httpOnly 쿠키 기반 토큰 관리 실습 (세션 vs 토큰 릴레이)
+- Next.js `output: 'standalone'`과 Docker 컨테이너 배포 구성
+- 무중단 배포(blue-green, rolling) 실제 구성 방법
